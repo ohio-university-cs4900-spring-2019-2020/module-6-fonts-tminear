@@ -34,7 +34,10 @@
 
 //If we want to use way points, we need to include this.
 #include "NewModuleWayPoints.h"
+#include "NetMessage.h"
+#include "NetMessengerClient.h"
 #include "io.h"
+#include "Airplane.h"
 
 using namespace Aftr;
 
@@ -42,6 +45,7 @@ GLViewNewModule* GLViewNewModule::New( const std::vector< std::string >& args )
 {
    GLViewNewModule* glv = new GLViewNewModule( args );
    glv->init( Aftr::GRAVITY, Vector( 0, 0, -1.0f ), "aftr.conf", PHYSICS_ENGINE_TYPE::petODE );
+   glv->client = NetMessengerClient::New("127.0.0.1");
    glv->onCreate();
    return glv;
 }
@@ -80,25 +84,17 @@ void GLViewNewModule::onCreate()
    this->setActorChaseType( STANDARDEZNAV ); //Default is STANDARDEZNAV mode
    //this->setNumPhysicsStepsPerRender( 0 ); //pause physics engine on start up; will remain paused till set to 1
 
-   if ((_access("../irrKlang-64bit-1.6.0/media/sandstorm.mp3", 0)) == -1) {
-       std::cerr << "Path to sound not found" << std::endl;
-       return;
-   }
-
-   this->sound = SoundManager::init();
-   this->sound->play2DSound("../irrKlang-64bit-1.6.0/media/sandstorm.mp3", true, false, true);
-   this->sound->get2DSound().at(0)->setVolume(0.5f);
-   this->sound->play3DSound("../../../shared/mm/sounds/sound4.wav", Vector(50, 50, 5), true, false, true);
-   std::cout << this->sound->get3DSound().size() << std::endl;
-   this->sound->get3DSound().back()->setVolume(0.9f);
-   this->sound->get3DSound().back()->setMinDistance(7.0f);
-
+   this->airplane = Airplane::New();
+   worldLst->push_back(this->airplane->getWorldObject());
 }
 
 
 GLViewNewModule::~GLViewNewModule()
 {
    //Implicitly calls GLView::~GLView()
+    NetMessageCreateRawWO x;
+
+    delete client;
 }
 
 
@@ -108,16 +104,6 @@ void GLViewNewModule::updateWorld()
                           //If you want to add additional functionality, do it after
                           //this call.
 
-
-   if (!this->sound->get3DSound().empty()) {
-       this->sound->getSoundEngine()->setListenerPosition(
-           this->sound->convertFromVector(this->cam->getPosition()),
-           this->sound->convertFromVector(this->cam->getLookDirection()),
-           irrklang::vec3df(0, 0, 0),
-           this->sound->convertFromVector(this->cam->getNormalDirection())
-
-       );
-   }
 }
 
 
@@ -153,7 +139,11 @@ void GLViewNewModule::onKeyDown( const SDL_KeyboardEvent& key )
 
    if( key.keysym.sym == SDLK_1 )
    {
+        NetMessageCreateRawWO msg;
 
+        this->airplane->setPosition(this->airplane->getPosition() + Vector(5, 0, 0));
+       
+        this->client->sendNetMsgSynchronousTCP(NetMessageCreateRawWO(this->airplane->getPosition()));
    }
 }
 
@@ -182,6 +172,7 @@ void Aftr::GLViewNewModule::loadMap()
    std::string wheeledCar( ManagerEnvironmentConfiguration::getSMM() + "/models/rcx_treads.wrl" );
    std::string grass( ManagerEnvironmentConfiguration::getSMM() + "/models/grassFloor400x400_pp.wrl" );
    std::string human( ManagerEnvironmentConfiguration::getSMM() + "/models/human_chest.wrl" );
+   
    
    //SkyBox Textures readily available
    std::vector< std::string > skyBoxImageNames; //vector to store texture paths
@@ -241,6 +232,13 @@ void Aftr::GLViewNewModule::loadMap()
    grassSkin.setSpecularCoefficient( 10 ); // How "sharp" are the specular highlights (bigger is sharper, 1000 is very sharp, 10 is very dull)
    wo->setLabel( "Grass" );
    worldLst->push_back( wo );
+
+   //Create Object
+   //std::string ship("../mm/models/Aircraft_KC_135.3ds");
+  // wo = WO::New(ship, Vector(0.01, 0.01, 0.01), MESH_SHADING_TYPE::mstFLAT);
+   //wo->setPosition(Vector(25,0, 5));
+   //wo->setLabel("AircraftEngine");
+   //worldLst->push_back(wo);
 
    ////Create the infinite grass plane that uses the Open Dynamics Engine (ODE)
    //wo = WOStatic::New( grass, Vector(1,1,1), MESH_SHADING_TYPE::mstFLAT );

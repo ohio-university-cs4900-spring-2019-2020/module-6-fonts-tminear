@@ -1,8 +1,9 @@
 #pragma once
 
 #include "GLView.h"
-#include "irrKlang.h"
-#include "Sound.h"
+#include "NetMessage.h"
+#include "NetMessengerClient.h"
+#include "Airplane.h"
 
 namespace Aftr
 {
@@ -35,10 +36,14 @@ public:
    virtual void onKeyDown( const SDL_KeyboardEvent& key );
    virtual void onKeyUp( const SDL_KeyboardEvent& key );
 
+   Airplane* airplane;
+
 protected:
    GLViewNewModule( const std::vector< std::string >& args );
    virtual void onCreate();   
-   SoundManager* sound;
+   
+   NetMessengerClient* client;
+   WO* netObj;   
 };
 
 /** \} */
