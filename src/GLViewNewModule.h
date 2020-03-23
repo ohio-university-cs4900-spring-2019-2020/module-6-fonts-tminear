@@ -4,6 +4,9 @@
 #include "NetMessage.h"
 #include "NetMessengerClient.h"
 #include "Airplane.h"
+#include <WOFTGLString.h>
+#include <MGLFTGLString.h>
+#include <WOGUILabel.h>
 
 namespace Aftr
 {
@@ -40,12 +43,11 @@ public:
 
 protected:
    GLViewNewModule( const std::vector< std::string >& args );
-   virtual void onCreate();   
-   
+   virtual void onCreate(); 
+
    NetMessengerClient* client;
    WO* netObj;   
+   WOFTGLString* airplaneMessage;
 };
-
-/** \} */
 
 } //namespace Aftr

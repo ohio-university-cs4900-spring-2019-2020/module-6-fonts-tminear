@@ -38,8 +38,13 @@
 #include "NetMessengerClient.h"
 #include "io.h"
 #include "Airplane.h"
+#include <WOFTGLString.h>
+#include <MGLFTGLString.h>
+#include <WOGUILabel.h>
 
 using namespace Aftr;
+
+std::string comicSans(ManagerEnvironmentConfiguration::getSMM() + "/fonts/COMIC.ttf");
 
 GLViewNewModule* GLViewNewModule::New( const std::vector< std::string >& args )
 {
@@ -85,7 +90,16 @@ void GLViewNewModule::onCreate()
    //this->setNumPhysicsStepsPerRender( 0 ); //pause physics engine on start up; will remain paused till set to 1
 
    this->airplane = Airplane::New();
+
+   this->airplaneMessage = WOFTGLString::New(comicSans, 30);//front size should not be confused with world size
+   this->airplaneMessage->getModelT<MGLFTGLString>()->setFontColor(aftrColor4f(1.0f, 0.0f, 0.0f, 1.0f));
+   this->airplaneMessage->getModelT<MGLFTGLString>()->setSize(30, 10);   
+   this->airplaneMessage->setPosition(25, 0, 15);
+   this->airplaneMessage->getModelT<MGLFTGLString>()->setText("Airplane Pos: " + this->airplaneMessage->getPosition().toString());
+   this->airplaneMessage->rotateAboutGlobalX(Aftr::PI / 2);
+
    worldLst->push_back(this->airplane->getWorldObject());
+   worldLst->push_back(this->airplaneMessage);
 }
 
 
@@ -142,7 +156,9 @@ void GLViewNewModule::onKeyDown( const SDL_KeyboardEvent& key )
         NetMessageCreateRawWO msg;
 
         this->airplane->setPosition(this->airplane->getPosition() + Vector(5, 0, 0));
-       
+        this->airplaneMessage->setPosition(this->airplaneMessage->getPosition() + Vector(5, 0, 0));
+        this->airplaneMessage->getModelT<MGLFTGLString>()->setText("Airplane Pos: " + this->airplaneMessage->getPosition().toString());
+
         this->client->sendNetMsgSynchronousTCP(NetMessageCreateRawWO(this->airplane->getPosition()));
    }
 }
@@ -201,6 +217,9 @@ void Aftr::GLViewNewModule::loadMap()
    //skyBoxImageNames.push_back( ManagerEnvironmentConfiguration::getSMM() + "/images/skyboxes/space_milk_chocolate+6.jpg" );
    //skyBoxImageNames.push_back( ManagerEnvironmentConfiguration::getSMM() + "/images/skyboxes/space_solar_bloom+6.jpg" );
    //skyBoxImageNames.push_back( ManagerEnvironmentConfiguration::getSMM() + "/images/skyboxes/space_thick_rb+6.jpg" );
+   //skyBoxImageNames.push_back( ManagerEnvironmentConfiguration::getSMM() + "/models/Sans.jpg" );
+
+
 
    float ga = 0.1f; //Global Ambient Light level for this module
    ManagerLight::setGlobalAmbientLight( aftrColor4f( ga, ga, ga, 1.0f ) );
@@ -220,6 +239,8 @@ void Aftr::GLViewNewModule::loadMap()
    wo->renderOrderType = RENDER_ORDER_TYPE::roOPAQUE;
    worldLst->push_back( wo );
 
+   std::string sans(ManagerEnvironmentConfiguration::getSMM() + "/models/Sans.jpg");
+
    ////Create the infinite grass plane (the floor)
    wo = WO::New( grass, Vector( 1, 1, 1 ), MESH_SHADING_TYPE::mstFLAT );
    wo->setPosition( Vector( 0, 0, 0 ) );
@@ -232,6 +253,26 @@ void Aftr::GLViewNewModule::loadMap()
    grassSkin.setSpecularCoefficient( 10 ); // How "sharp" are the specular highlights (bigger is sharper, 1000 is very sharp, 10 is very dull)
    wo->setLabel( "Grass" );
    worldLst->push_back( wo );
+
+   
+   WOGUILabel* label = WOGUILabel::New(nullptr);
+   label->setText("Press enter to type a message");
+   label->setColor(255, 0, 0, 255);
+   label->setFontSize(30); //font size is correlated with world size
+   label->setPosition(Vector(0, 1, 0));
+   label->setFontOrientation(FONT_ORIENTATION::foLEFT_TOP);
+   label->setFontPath(comicSans);
+   worldLst->push_back(label);
+
+   //WOFTGLString* string = WOFTGLString::New(comicSans, 30);//front size should not be confused with world size
+   //string->getModelT<MGLFTGLString>()->setFontColor(aftrColor4f(1.0f, 0.0f, 0.0f, 1.0f));
+   //string->getModelT<MGLFTGLString>()->setSize(30, 10);
+   //string->getModelT<MGLFTGLString>()->setText("This is a test.");
+   //string->setText("This is only a test.");
+   //string->rotateAboutGlobalX(Aftr::PI / 2);
+   //string->setPosition(25, 10, 5);
+   
+   //worldLst->push_back(string);
 
    //Create Object
    //std::string ship("../mm/models/Aircraft_KC_135.3ds");
